@@ -1,0 +1,9 @@
+apiVersion: fn.kpt.dev/v1alpha1
+kind: SetHelmValues
+metadata:
+  name: meta-only-test
+helmValuesMetadata:
+  name: my-meta-only-map
+  labels:
+    foo: bar
+  namespace: yo

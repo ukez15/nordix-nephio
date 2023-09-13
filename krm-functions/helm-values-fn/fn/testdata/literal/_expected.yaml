@@ -1,0 +1,32 @@
+apiVersion: config.kubernetes.io/v1
+kind: ResourceList
+items:
+- apiVersion: v1
+  kind: HelmValues
+  metadata:
+    name: my-helm-values
+    namespace: some-ns
+    labels:
+      foo: bar
+    annotations:
+      internal.config.kubernetes.io/path: _helm_values_my-helm-values.yaml
+  data:
+    foo: bar
+    footoomoo: barbar
+functionConfig:
+  apiVersion: fn.kpt.dev/v1alpha1
+  kind: SetHelmValues
+  metadata:
+    name: literal-test
+  helmValuesMetadata:
+    name: my-helm-values
+    namespace: some-ns
+    labels:
+      foo: bar
+  data:
+  - type: literal
+    key: foo
+    value: bar
+  - type: literal
+    key: footoomoo
+    value: barbar
