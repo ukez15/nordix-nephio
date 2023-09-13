@@ -1,0 +1,4 @@
+github.com/nephio-project/nephio/krm-functions/helm-values-fn/fn/helm_values.go:44:	generate	100.0%
+github.com/nephio-project/nephio/krm-functions/helm-values-fn/fn/helm_values.go:64:	Validate	100.0%
+github.com/nephio-project/nephio/krm-functions/helm-values-fn/fn/helm_values.go:73:	Process		78.6%
+total:											(statements)	84.2%
