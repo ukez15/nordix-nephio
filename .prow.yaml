@@ -48,3 +48,15 @@ presubmits:
       - image: registry.nordix.org/nephio/gotests:1701529132350836736
         command:
         - "/usr/local/bin/lichen.sh"
+
+postsubmits:
+  - name: postsubmit-nephio-go-test
+    decorate: true
+    run_if_changed: "(\\.go|Makefile)$"
+    spec:
+      containers:
+      - image: registry.nordix.org/nephio/gotests:1701529132350836736
+        command:
+        - make
+        args:
+        - unit
