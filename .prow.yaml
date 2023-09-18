@@ -60,3 +60,42 @@ postsubmits:
         - make
         args:
         - unit
+  - name: postsubmit-nephio-golangci-lint
+    decorate: true
+    run_if_changed: "(\\.go|Makefile)$"
+    spec:
+      containers:
+      - image: registry.nordix.org/nephio/gotests:1701529132350836736
+        command:
+        - make
+        args:
+        - lint
+  - name: postsubmit-nephio-gosec
+    decorate: true
+    run_if_changed: "(\\.go|Makefile)$"
+    spec:
+      containers:
+      - image: registry.nordix.org/nephio/gotests:1701529132350836736
+        command:
+        - make
+        args:
+        - gosec
+  - name: postsubmit-nephio-license-header-check
+    decorate: true
+    always_run: true
+    spec:
+      containers:
+      - image: registry.nordix.org/nephio/gotests:1701529132350836736
+        command:
+        - "/bin/sh"
+        - "-c"
+        - |
+          /usr/local/bin/checklicense.sh > ${ARTIFACTS}/license_headers_results.txt   
+  - name: postsubmit-nephio-lichen
+    decorate: true
+    run_if_changed: "^.*.go$"
+    spec:
+      containers:
+      - image: registry.nordix.org/nephio/gotests:1701529132350836736
+        command:
+        - "/usr/local/bin/lichen.sh"
