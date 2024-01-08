@@ -1203,7 +1203,7 @@ status:
 ```
 </details>
 
-## The prochctl command
+## The porchctl command
 
 When Porch was ported to Nephio, the `kpt alpha rpkg` commands in kpt were moved into a new comand called `porchctl`. Porch is as yet not released in Nephio, so we need to build the `porchctl` command from source.
 
