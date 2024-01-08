@@ -1348,12 +1348,13 @@ NAME                                                  PACKAGE            WORKSPA
 management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1                         false    Draft       management
 ```
 
-This command creates a new PackageRevision CR in porch and also creates a branch called `network-function/va` in our gitea `management` repo. Use the Gitea web UI to confirm that the pranch ahs been created and note that it only has default content as yet.
+This command creates a new PackageRevision CR in porch and also creates a branch called `network-function/v1` in our gitea `management` repo. Use the Gitea web UI to confirm that the pranch ahs been created and note that it only has default content as yet.
 
 > This step is a workaround for a possible bug. The `porchctl rpkg push` command expects a `.KptRevisionMetadata` file to exist in the directory from which we are psuhing the package contents. The following command reads the `KptRevisionMetadata` from the PackageRevision we have just created and stores it in that file:
 
 ```
 porchctl -n porch-demo rpkg pull management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 | yq '.items[0] > blueprints/network-function/.KptRevisionMetadata'
+```
 
 Now, we push the package contents to porch:
 ```
@@ -1361,4 +1362,25 @@ porchctl -n porch-demo rpkg push management-8b80738a6e0707e3718ae1db3668d0b8ca3f
 ```
 
 Check on the Gitea web UI andwe can see that the actual package contents have been pushed.
+
+Now we propose and approve the package.
+
+```
+porchctl -n porch-demo rpkg propose management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 proposed
+
+porchctl -n porch-demo rpkg get --name network-function                                
+NAME                                                  PACKAGE            WORKSPACENAME   REVISION   LATEST   LIFECYCLE   REPOSITORY
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1                         false    Proposed    management
+
+porchctl -n porch-demo rpkg approve management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 approved
+
+porchctl -n porch-demo rpkg get --name network-function                                
+NAME                                                  PACKAGE            WORKSPACENAME   REVISION   LATEST   LIFECYCLE   REPOSITORY
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1              v1         true     Published   management
+
+```
+
+Once we approve the package, the package is merged into the main branch in the `management` repo and the branch called `network-function/v1` in that repo is removed.
 
