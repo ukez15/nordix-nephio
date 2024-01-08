@@ -1,16 +1,28 @@
-# Instructions for running Porch Demo
+# Porch Tutorial
 
-This demo is based on the [Porch demo produced by Tal Liron of Google](https://github.com/tliron/klab/tree/main/environments/porch-demo).
+This tutorial is a guide to installing and using Porch. is based on the [Porch demo produced by Tal Liron of Google](https://github.com/tliron/klab/tree/main/environments/porch-demo). A person using this tutorial should be very comfortable with using with `git`, `docker`, and `kubernetes`.
 
 # Table of Contents
-1. [Create the Kind clusters for management and edge1](#Create-the-Kind-clusters-for-management-and-edge1)
-2. [Install MetalLB on the management cluster](#Install-MetalLB-on-the-management-cluster)
-3. [Deploy and set up gitea on the management cluster](#Deploy-and-set-up-gitea-on-the-management-cluster)
-4. [Create repositories on Gitea for `management` and `edge1`](#Create-repositories-on-Gitea-for-`management`-and-`edge1`)
-5. [Install Porch](#Install-Porch)
-6. [Connect the Gitea repositories to Porch](#Connect-the-Gitea-repositories-to-Porch)
-7. [Configure configsync on the workload cluster](#Configure-configsync-on-the-workload-cluster)
-8. [Exploring the Porch resources](#Exploring-the-Porch-resources)
+1. [Prerequisites](#Prerequisites)
+2. [Create the Kind clusters for management and edge1](#Create-the-Kind-clusters-for-management-and-edge1)
+3. [Install MetalLB on the management cluster](#Install-MetalLB-on-the-management-cluster)
+4. [Deploy and set up gitea on the management cluster](#Deploy-and-set-up-gitea-on-the-management-cluster)
+5. [Create repositories on Gitea for `management` and `edge1`](#Create-repositories-on-Gitea-for-`management`-and-`edge1`)
+6. [Install Porch](#Install-Porch)
+7. [Connect the Gitea repositories to Porch](#Connect-the-Gitea-repositories-to-Porch)
+8. [Configure configsync on the workload cluster](#Configure-configsync-on-the-workload-cluster)
+9. [Exploring the Porch resources](#Exploring-the-Porch-resources)
+
+## Prerequisites
+
+The tutorial can be executed on a Linux VM or directly on a laptop. It has been verified to execute on a Macbook Pro M1 machine.
+
+The following software should be installed prior to running through the tutorial:
+1. [git](https://git-scm.com/)
+2. [Docker](https://www.docker.com/get-started/)
+2. [kubectl](https://kubernetes.io/docs/reference/kubectl/)
+3. [kind](https://kind.sigs.k8s.io/)
+4. [kpt](https://github.com/kptdev/kpt)
 
 ## Create the Kind clusters for management and edge1
 
