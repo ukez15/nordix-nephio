@@ -13,6 +13,7 @@ This tutorial is a guide to installing and using Porch. is based on the [Porch d
 8. [Configure configsync on the workload cluster](#Configure-configsync-on-the-workload-cluster)
 9. [Exploring the Porch resources](#Exploring-the-Porch-resources)
 10. [The porchctl command](#The-porchctl-command)
+11. [Creating a blueprint in Porch](#Creating-a-blueprint-in-Porch)
 
 See also [the Nephio Learning Resource](https://github.com/nephio-project/docs/blob/main/learning.md) page for background help and information.
 
@@ -23,12 +24,13 @@ The tutorial can be executed on a Linux VM or directly on a laptop. It has been 
 The following software should be installed prior to running through the tutorial:
 1. [git](https://git-scm.com/)
 2. [Docker](https://www.docker.com/get-started/)
-2. [kubectl](https://kubernetes.io/docs/reference/kubectl/)
-3. [kind](https://kind.sigs.k8s.io/)
-4. [kpt](https://github.com/kptdev/kpt)
-5. [The go programming language](https://go.dev/)
-6. [Visual Studio Code](https://code.visualstudio.com/download)
-7. [VS Code extensions for go](https://code.visualstudio.com/docs/languages/go)
+3. [kubectl](https://kubernetes.io/docs/reference/kubectl/)
+4. [kind](https://kind.sigs.k8s.io/)
+5. [kpt](https://github.com/kptdev/kpt)
+6. [The go programming language](https://go.dev/)
+7. [Visual Studio Code](https://code.visualstudio.com/download)
+8. [VS Code extensions for go](https://code.visualstudio.com/docs/languages/go)
+9. [yq yaml query utility](https://mikefarah.gitbook.io/yq/)
 
 ## Create the Kind clusters for management and edge1
 
@@ -1246,13 +1248,48 @@ Use "porchctl [command] --help" for more information about a command.
 ```
 </details>
 
-The `porchtcl` command is an administration command for acting on Porch `Repository` and `PackageRevision` CRs.
+_optional: Configure `porchctl` on your environment_
+
+1. Either add `porchctl` to your PAT or copy it to a directory already in the path
+```
+sudo cp ~/work/porch/porch/build/porchctl /usr/local/bin
+```
+2. Configure autocompletion on `porchctl` by editing your shell startup configuration file such as `.zshrc`
+
+
+The `porchtcl` command is an administration command for acting on Porch `Repository` (repo) and `PackageRevision` (rpkg) CRs.
+
+The commands for administering repositories are:
+
+| Command               | Description                    |
+| --------------------- | ------------------------------ |
+| `porchctl repo get`   | List registered repositories.  |
+| `porchctl repo reg`   | Register a package repository. |
+| `porchctl repo unreg` | Unregister a repository.       |
+
+The commands for administering package revisions are:
+
+| Command                        | Description                                                                             |
+| ------------------------------ | --------------------------------------------------------------------------------------- |
+| `porchctl rpkg approve`        | Approve a proposal to publish a package revision.                                       |
+| `porchctl rpkg clone`          | Create a clone of an existing package revision.                                         |
+| `porchctl rpkg copy`           | Create a new package revision from an existing one.                                     |
+| `porchctl rpkg del`            | Delete a package revision.                                                              |
+| `porchctl rpkg get`            | List package revisions in registered repositories.                                      |
+| `porchctl rpkg init`           | Initializes a new package in a repository.                                              |
+| `porchctl rpkg propose`        | Propose that a package revision should be published.                                    |
+| `porchctl rpkg propose-delete` | Propose deletion of a published package revision.                                       |
+| `porchctl rpkg pull`           | Pull the content of the package revision.                                               |
+| `porchctl rpkg push`           | Push resources to a package revision.                                                   |
+| `porchctl rpkg reject`         | Reject a proposal to publish or delete a package revision.                              |
+| `porchctl rpkg update`         | Update a downstream package revision to a more recent revision of its upstream package. |
+
 
 <details>
 <summary>Check that `porchctl` lists our repos:</summary>
 
 ```
-build/porchctl repo --kubeconfig=$HOME/.kube/kind-management-config -n porch-demo get
+build/porchctl repo -n porch-demo get
 NAME                  TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
 edge1                 git    Package   true         True    http://172.18.255.200:3000/nephio/edge1.git
 external-blueprints   git    Package   false        True    https://github.com/nephio-project/free5gc-packages.git
@@ -1264,7 +1301,7 @@ management            git    Package   false        True    http://172.18.255.20
 <summary>Check that `porchctl` lists our remote packages (PackageRevisions):</summary>
 
 ```
-build/porchctl rpkg --kubeconfig=$HOME/.kube/kind-management-config -n porch-demo get
+build/porchctl rpkg -n porch-demo get
 NAME                                                           PACKAGE              WORKSPACENAME   REVISION   LATEST   LIFECYCLE   REPOSITORY
 external-blueprints-922121d0bcdd56bfa8cae6c375720e2b5f358ab0   free5gc-cp           main            main       false    Published   external-blueprints
 external-blueprints-dabbc422fdf0b8e5942e767d929b524e25f7eef9   free5gc-cp           v1              v1         true     Published   external-blueprints
@@ -1298,3 +1335,30 @@ external-blueprints-7757966cc7b965f1b9372370a4b382c8375a2b40   pkg-example-upf-b
 </details>
 
 The output above is similar to the output of `kubectl get packagerevision -n porch-demo` above.
+
+## Creating a blueprint in Porch
+
+Create a new pacakge in our `management` repo using the sample `network-function` package provided.
+
+```
+porchctl -n porch-demo rpkg init network-function --repository=management --workspace=v1
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 created
+porchctl -n porch-demo rpkg get --name network-function
+NAME                                                  PACKAGE            WORKSPACENAME   REVISION   LATEST   LIFECYCLE   REPOSITORY
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1                         false    Draft       management
+```
+
+This command creates a new PackageRevision CR in porch and also creates a branch called `network-function/va` in our gitea `management` repo. Use the Gitea web UI to confirm that the pranch ahs been created and note that it only has default content as yet.
+
+> This step is a workaround for a possible bug. The `porchctl rpkg push` command expects a `.KptRevisionMetadata` file to exist in the directory from which we are psuhing the package contents. The following command reads the `KptRevisionMetadata` from the PackageRevision we have just created and stores it in that file:
+
+```
+porchctl -n porch-demo rpkg pull management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 | yq '.items[0] > blueprints/network-function/.KptRevisionMetadata'
+
+Now, we push the package contents to porch:
+```
+porchctl -n porch-demo rpkg push management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 blueprints/network-function
+```
+
+Check on the Gitea web UI andwe can see that the actual package contents have been pushed.
+
