@@ -3,14 +3,14 @@
 This demo is based on the [Porch demo produced by Tal Liron of Google](https://github.com/tliron/klab/tree/main/environments/porch-demo).
 
 # Table of Contents
-1. [Create the Kind clusters for management and edge1](#Create_the_Kind_clusters_for_management_and_edge1)
-2. [Install MetalLB on the management cluster](#Install_MetalLB_on_the_management_cluster)
-3. [Deploy and set up gitea on the management cluster](#Deploy_and_set_up_gitea_on_the_management_cluster)
-4. [Create repositories on Gitea for `management` and `edge1`](#Create_repositories_on_Gitea_for_`management`_and_`edge1`)
-5. [Install Porch](#Install_Porch)
-6. [Connect the Gitea repositories to Porch](#Connect_the_Gitea_repositories_to_Porch)
-7. [Configure configsync on the workload cluster](#Configure_configsync_on_the_workload_cluster)
-8. [Exploring the Porch resources](#Exploring_the_Porch_resources)
+1. [Create the Kind clusters for management and edge1](#Create-the-Kind-clusters-for-management-and-edge1)
+2. [Install MetalLB on the management cluster](#Install-MetalLB-on-the-management-cluster)
+3. [Deploy and set up gitea on the management cluster](#Deploy-and-set-up-gitea-on-the-management-cluster)
+4. [Create repositories on Gitea for `management` and `edge1`](#Create-repositories-on-Gitea-for-`management`-and-`edge1`)
+5. [Install Porch](#Install-Porch)
+6. [Connect the Gitea repositories to Porch](#Connect-the-Gitea-repositories-to-Porch)
+7. [Configure configsync on the workload cluster](#Configure-configsync-on-the-workload-cluster)
+8. [Exploring the Porch resources](#Exploring-the-Porch-resources)
 
 ## Create the Kind clusters for management and edge1
 
