@@ -1426,16 +1426,6 @@ edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946   network-function-a   v1        
 
 You can verify that the package is in the `network-function-a/v1` branch of the deployment repo using the Gitea web UI.
 
-
-Check that the `network-function-a` package is not deployed on the edge1 cluster yet:
-```
-export KUBECONFIG=~/.kube/kind-edge1-config
-
-kubectl get pod -n network-function-a
-No resources found in network-function-a namespace.
-
-```
-
 We now propose and approve the deployment package, which merges the package to the `edge1` repo and further triggers Configsync to apply the pacakge to the `edge1` cluster.
 
 ```
@@ -1446,21 +1436,6 @@ porchctl -n porch-demo rpkg approve edge1-9b4b4d99c43b5c5c8489a47bbce9a61f799049
 edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946 approved
 
 porchctl -n porch-demo rpkg get --name network-function-a
-NAME                                             PACKAGE              WORKSPACENAME   REVISION   LATEST   LIFECYCLE   REPOSITORY
-edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946   network-function-a   v1              v1         true     Published   edge1
-```
 
-We can now check that the `network-function-a` package is deployed on the edge1 cluster and that the pod is running
-```
-export KUBECONFIG=~/.kube/kind-edge1-config
 
-kubectl get pod -n network-function-a
-No resources found in network-function-a namespace.
-
-kubectl get pod -n network-function-a
-network-function-9779fc9f5-2tswc   1/1     ContainerCreating   0          9s
-
-kubectl get pod -n network-function-a
-NAME                               READY   STATUS    RESTARTS   AGE
-network-function-9779fc9f5-2tswc   1/1     Running   0          9s
 ```
