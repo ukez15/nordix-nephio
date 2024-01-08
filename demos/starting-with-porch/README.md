@@ -1361,7 +1361,7 @@ Now, we push the package contents to porch:
 porchctl -n porch-demo rpkg push management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 blueprints/network-function
 ```
 
-Check on the Gitea web UI andwe can see that the actual package contents have been pushed.
+Check on the Gitea web UI and we can see that the actual package contents have been pushed.
 
 Now we propose and approve the package.
 
@@ -1382,5 +1382,6 @@ management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1     
 
 ```
 
-Once we approve the package, the package is merged into the main branch in the `management` repo and the branch called `network-function/v1` in that repo is removed.
+Once we approve the package, the package is merged into the main branch in the `management` repo and the branch called `network-function/v1` in that repo is removed. Use the Gite UI to verify this. We now have our blueprint package in our `management` repo and we can deploy this package into workload clusters.
+
 
