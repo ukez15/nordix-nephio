@@ -12,6 +12,9 @@ This tutorial is a guide to installing and using Porch. is based on the [Porch d
 7. [Connect the Gitea repositories to Porch](#Connect-the-Gitea-repositories-to-Porch)
 8. [Configure configsync on the workload cluster](#Configure-configsync-on-the-workload-cluster)
 9. [Exploring the Porch resources](#Exploring-the-Porch-resources)
+10. [The porchctl command](#The-porchctl-command)
+
+See also [the Nephio Learning Resource](https://github.com/nephio-project/docs/blob/main/learning.md) page for background help and information.
 
 ## Prerequisites
 
@@ -23,6 +26,9 @@ The following software should be installed prior to running through the tutorial
 2. [kubectl](https://kubernetes.io/docs/reference/kubectl/)
 3. [kind](https://kind.sigs.k8s.io/)
 4. [kpt](https://github.com/kptdev/kpt)
+5. [The go programming language](https://go.dev/)
+6. [Visual Studio Code](https://code.visualstudio.com/download)
+7. [VS Code extensions for go](https://code.visualstudio.com/docs/languages/go)
 
 ## Create the Kind clusters for management and edge1
 
@@ -1196,3 +1202,99 @@ status:
         creationTimestamp: null
 ```
 </details>
+
+## The prochctl command
+
+When Porch was ported to Nephio, the `kpt alpha rpkg` commands in kpt were moved into a new comand called `porchctl`. Porch is as yet not released in Nephio, so we need to build the `porchctl` command from source.
+
+```
+git clone https://github.com/nephio-project/porch.git
+cd porch
+go build -o build/porchctl ./cmd/porchctl
+```
+
+<details>
+<summary>Check that porchctl is working:</summary>
+
+```
+build/porchctl --help
+
+porchctl interacts with a Kubernetes API server with the Porch
+server installed as an aggregated API server. It allows you to
+manage Porch repository registrations and the packages within
+those repositories.
+
+Usage:
+  porchctl [flags]
+  porchctl [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  repo        Manage package repositories.
+  rpkg        Manage packages.
+  version     Print the version number of porchctl
+
+Flags:
+  -h, --help                           help for porchctl
+      --log-flush-frequency duration   Maximum number of seconds between log flushes (default 5s)
+      --truncate-output                Enable the truncation for output (default true)
+  -v, --v Level                        number for the log level verbosity
+
+Use "porchctl [command] --help" for more information about a command.
+
+```
+</details>
+
+The `porchtcl` command is an administration command for acting on Porch `Repository` and `PackageRevision` CRs.
+
+<details>
+<summary>Check that `porchctl` lists our repos:</summary>
+
+```
+build/porchctl repo --kubeconfig=$HOME/.kube/kind-management-config -n porch-demo get
+NAME                  TYPE   CONTENT   DEPLOYMENT   READY   ADDRESS
+edge1                 git    Package   true         True    http://172.18.255.200:3000/nephio/edge1.git
+external-blueprints   git    Package   false        True    https://github.com/nephio-project/free5gc-packages.git
+management            git    Package   false        True    http://172.18.255.200:3000/nephio/management.git
+```
+</details>
+
+<details>
+<summary>Check that `porchctl` lists our remote packages (PackageRevisions):</summary>
+
+```
+build/porchctl rpkg --kubeconfig=$HOME/.kube/kind-management-config -n porch-demo get
+NAME                                                           PACKAGE              WORKSPACENAME   REVISION   LATEST   LIFECYCLE   REPOSITORY
+external-blueprints-922121d0bcdd56bfa8cae6c375720e2b5f358ab0   free5gc-cp           main            main       false    Published   external-blueprints
+external-blueprints-dabbc422fdf0b8e5942e767d929b524e25f7eef9   free5gc-cp           v1              v1         true     Published   external-blueprints
+external-blueprints-716aae722092dbbb9470e56079b90ad76ec8f0d5   free5gc-operator     main            main       false    Published   external-blueprints
+external-blueprints-d65dc89f7a2472650651e9aea90edfcc81a9afc6   free5gc-operator     v1              v1         false    Published   external-blueprints
+external-blueprints-9fee880e8fa52066f052c9cae7aac2e2bc1b5a54   free5gc-operator     v2              v2         false    Published   external-blueprints
+external-blueprints-91d60ee31d2d0a1a6d5f1807593d5419434accd3   free5gc-operator     v3              v3         false    Published   external-blueprints
+external-blueprints-21f19a0641cf520e7dc6268e64c58c2c30c27036   free5gc-operator     v4              v4         false    Published   external-blueprints
+external-blueprints-bf2e7522ee92680bd49571ab309e3f61320cf36d   free5gc-operator     v5              v5         true     Published   external-blueprints
+external-blueprints-c1b9ecb73118e001ab1d1213e6a2c94ab67a0939   free5gc-upf          main            main       false    Published   external-blueprints
+external-blueprints-5d48b1516e7b1ea15830ffd76b230862119981bd   free5gc-upf          v1              v1         true     Published   external-blueprints
+external-blueprints-ed97798b46b36d135cf23d813eccad4857dff90f   pkg-example-amf-bp   main            main       false    Published   external-blueprints
+external-blueprints-ed744bfdf4a4d15d4fcf3c46fde27fd6ac32d180   pkg-example-amf-bp   v1              v1         false    Published   external-blueprints
+external-blueprints-5489faa80782f91f1a07d04e206935d14c1eb24c   pkg-example-amf-bp   v2              v2         false    Published   external-blueprints
+external-blueprints-16e2255bd433ef532684a3c1434ae0bede175107   pkg-example-amf-bp   v3              v3         false    Published   external-blueprints
+external-blueprints-7689cc6c953fa83ea61283983ce966dcdffd9bae   pkg-example-amf-bp   v4              v4         false    Published   external-blueprints
+external-blueprints-caff9609883eea7b20b73b7425e6694f8eb6adc3   pkg-example-amf-bp   v5              v5         true     Published   external-blueprints
+external-blueprints-00b6673c438909975548b2b9f20c2e1663161815   pkg-example-smf-bp   main            main       false    Published   external-blueprints
+external-blueprints-4f7dfbede99dc08f2b5144ca550ca218109c52f2   pkg-example-smf-bp   v1              v1         false    Published   external-blueprints
+external-blueprints-3d9ab8f61ce1d35e264d5719d4b3c0da1ab02328   pkg-example-smf-bp   v2              v2         false    Published   external-blueprints
+external-blueprints-2006501702e105501784c78be9e7d57e426d85e8   pkg-example-smf-bp   v3              v3         false    Published   external-blueprints
+external-blueprints-c97ed7c13b3aa47cb257217f144960743aec1253   pkg-example-smf-bp   v4              v4         false    Published   external-blueprints
+external-blueprints-3bd78e46b014dac5cc0c58788c1820d043d61569   pkg-example-smf-bp   v5              v5         true     Published   external-blueprints
+external-blueprints-c3f660848d9d7a4df5481ec2e06196884778cd84   pkg-example-upf-bp   main            main       false    Published   external-blueprints
+external-blueprints-4cb00a17c1ee2585d6c187ba4d0211da960c0940   pkg-example-upf-bp   v1              v1         false    Published   external-blueprints
+external-blueprints-5903efe295026124e6fea926df154a72c5bd1ea9   pkg-example-upf-bp   v2              v2         false    Published   external-blueprints
+external-blueprints-16142d8d23c1b8e868a9524a1b21634c79b432d5   pkg-example-upf-bp   v3              v3         false    Published   external-blueprints
+external-blueprints-60ef45bb8f55b63556e7467f16088325022a7ece   pkg-example-upf-bp   v4              v4         false    Published   external-blueprints
+external-blueprints-7757966cc7b965f1b9372370a4b382c8375a2b40   pkg-example-upf-bp   v5              v5         true     Published   external-blueprints
+```
+</details>
+
+The output above is similar to the output of `kubectl get packagerevision -n porch-demo` above.
