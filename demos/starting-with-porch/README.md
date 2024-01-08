@@ -1,5 +1,17 @@
 # Instructions for running Porch Demo
 
+This demo is based on the [Porch demo produced by Tal Liron of Google](https://github.com/tliron/klab/tree/main/environments/porch-demo).
+
+# Table of Contents
+1. [Create the Kind clusters for management and edge1](#Create_the_Kind_clusters_for_management_and_edge1)
+2. [Install MetalLB on the management cluster](#Install_MetalLB_on_the_management_cluster)
+3. [Deploy and set up gitea on the management cluster](#Deploy_and_set_up_gitea_on_the_management_cluster)
+4. [Create repositories on Gitea for `management` and `edge1`](#Create_repositories_on_Gitea_for_`management`_and_`edge1`)
+5. [Install Porch](#Install_Porch)
+6. [Connect the Gitea repositories to Porch](#Connect_the_Gitea_repositories_to_Porch)
+7. [Configure configsync on the workload cluster](#Configure_configsync_on_the_workload_cluster)
+8. [Exploring the Porch resources](#Exploring_the_Porch_resources)
+
 ## Create the Kind clusters for management and edge1
 
 Create the clusters:
@@ -253,3 +265,63 @@ Edit the `rootsync.yaml` file to set the IP address of Gitea and to turn off aut
 > #    secretRef:
 > #      name: edge1-access-token-configsync
 ```
+
+Check that Configsync is synchronized with the repo on the management cluster:
+```
+kubectl get pod -n config-management-system -l app=reconciler
+NAME                                     READY   STATUS    RESTARTS   AGE
+root-reconciler-edge1-68576f878c-92k54   4/4     Running   0          2d17h
+
+kubectl logs -n config-management-system root-reconciler-edge1-68576f878c-92k54 -c git-sync -f
+```
+<details open>
+<summary>Produces output similar to this</summary>
+
+```
+INFO: detected pid 1, running init handler
+I0105 17:50:11.472934      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="" "cmd"="git config --global gc.autoDetach false"
+I0105 17:50:11.493046      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="" "cmd"="git config --global gc.pruneExpire now"
+I0105 17:50:11.513487      15 main.go:473] "level"=0 "msg"="starting up" "pid"=15 "args"=["/git-sync","--root=/repo/source","--dest=rev","--max-sync-failures=30","--error-file=error.json","--v=5"]
+I0105 17:50:11.514044      15 main.go:923] "level"=0 "msg"="cloning repo" "origin"="http://172.18.255.200:3000/nephio/edge1.git" "path"="/repo/source"
+I0105 17:50:11.514061      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="" "cmd"="git clone -v --no-checkout -b main --depth 1 http://172.18.255.200:3000/nephio/edge1.git /repo/source"
+I0105 17:50:11.706506      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git rev-parse HEAD"
+I0105 17:50:11.729292      15 main.go:737] "level"=0 "msg"="syncing git" "rev"="HEAD" "hash"="385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:11.729332      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git fetch -f --tags --depth 1 http://172.18.255.200:3000/nephio/edge1.git main"
+I0105 17:50:11.920110      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git cat-file -t 385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:11.945545      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git rev-parse 385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:11.967150      15 main.go:726] "level"=1 "msg"="removing worktree" "path"="/repo/source/385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:11.967359      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git worktree prune"
+I0105 17:50:11.987522      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git worktree add --detach /repo/source/385295a2143f10a6cda0cf4609c45d7499185e01 385295a2143f10a6cda0cf4609c45d7499185e01 --no-checkout"
+I0105 17:50:12.057698      15 main.go:772] "level"=0 "msg"="adding worktree" "path"="/repo/source/385295a2143f10a6cda0cf4609c45d7499185e01" "branch"="origin/main"
+I0105 17:50:12.057988      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/385295a2143f10a6cda0cf4609c45d7499185e01" "cmd"="git reset --hard 385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:12.099783      15 main.go:833] "level"=0 "msg"="reset worktree to hash" "path"="/repo/source/385295a2143f10a6cda0cf4609c45d7499185e01" "hash"="385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:12.099805      15 main.go:838] "level"=0 "msg"="updating submodules"
+I0105 17:50:12.099976      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/385295a2143f10a6cda0cf4609c45d7499185e01" "cmd"="git submodule update --init --recursive --depth 1"
+I0105 17:50:12.442466      15 main.go:694] "level"=1 "msg"="creating tmp symlink" "root"="/repo/source/" "dst"="385295a2143f10a6cda0cf4609c45d7499185e01" "src"="tmp-link"
+I0105 17:50:12.442494      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/" "cmd"="ln -snf 385295a2143f10a6cda0cf4609c45d7499185e01 tmp-link"
+I0105 17:50:12.453694      15 main.go:699] "level"=1 "msg"="renaming symlink" "root"="/repo/source/" "old_name"="tmp-link" "new_name"="rev"
+I0105 17:50:12.453718      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/" "cmd"="mv -T tmp-link rev"
+I0105 17:50:12.467904      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git gc --auto"
+I0105 17:50:12.492329      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git cat-file -t HEAD"
+I0105 17:50:12.518878      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source" "cmd"="git rev-parse HEAD"
+I0105 17:50:12.540979      15 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
+I0105 17:50:27.553609      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git rev-parse HEAD"
+I0105 17:50:27.600401      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://172.18.255.200:3000/nephio/edge1.git refs/heads/main"
+I0105 17:50:27.694035      15 main.go:1065] "level"=1 "msg"="no update required" "rev"="HEAD" "local"="385295a2143f10a6cda0cf4609c45d7499185e01" "remote"="385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:27.694159      15 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
+I0105 17:50:42.695482      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git rev-parse HEAD"
+I0105 17:50:42.733276      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://172.18.255.200:3000/nephio/edge1.git refs/heads/main"
+I0105 17:50:42.826422      15 main.go:1065] "level"=1 "msg"="no update required" "rev"="HEAD" "local"="385295a2143f10a6cda0cf4609c45d7499185e01" "remote"="385295a2143f10a6cda0cf4609c45d7499185e01"
+I0105 17:50:42.826611      15 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
+
+.......
+
+I0108 11:04:05.935586      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git rev-parse HEAD"
+I0108 11:04:05.981750      15 cmd.go:48] "level"=5 "msg"="running command" "cwd"="/repo/source/rev" "cmd"="git ls-remote -q http://172.18.255.200:3000/nephio/edge1.git refs/heads/main"
+I0108 11:04:06.079536      15 main.go:1065] "level"=1 "msg"="no update required" "rev"="HEAD" "local"="385295a2143f10a6cda0cf4609c45d7499185e01" "remote"="385295a2143f10a6cda0cf4609c45d7499185e01"
+I0108 11:04:06.079599      15 main.go:585] "level"=1 "msg"="next sync" "wait_time"=15000000000
+```
+</details>
+
+## Exploring the Porch resources
+
