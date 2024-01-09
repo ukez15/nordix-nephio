@@ -1701,10 +1701,13 @@ Now our two packages are ready for deployment:
 ```
 porchctl rpkg propose edge1-a31b56c7db509652f00724dd49746660757cd98a --namespace=porch-demo
 edge1-a31b56c7db509652f00724dd49746660757cd98a proposed
+
 porchctl rpkg approve edge1-a31b56c7db509652f00724dd49746660757cd98a --namespace=porch-demo
 edge1-a31b56c7db509652f00724dd49746660757cd98a approved
+
 porchctl rpkg propose edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 --namespace=porch-demo
 edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 proposed
+
 porchctl rpkg approve edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 --namespace=porch-demo
 edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 approved
 ```
@@ -1712,6 +1715,7 @@ edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 approved
 We can now check that the `network-function-b` and `network-function-c` packages are deployed on the edge1 cluster and that the pods are running
 ```
 export KUBECONFIG=~/.kube/kind-edge1-config
+kubectl get pod -A | egrep '(NAMESPACE|network-function)'
 NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
 network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
 network-function-b             network-function-9779fc9f5-6zwhh                    1/1     Running   0               76s
