@@ -1,6 +1,6 @@
 # Porch Tutorial
 
-This tutorial is a guide to installing and using Porch. is based on the [Porch demo produced by Tal Liron of Google](https://github.com/tliron/klab/tree/main/environments/porch-demo). A person using this tutorial should be very comfortable with using with `git`, `docker`, and `kubernetes`.
+This tutorial is a guide to installing and using Porch. It is based on the [Porch demo produced by Tal Liron of Google](https://github.com/tliron/klab/tree/main/environments/porch-demo). Users should be very comfortable with using with `git`, `docker`, and `kubernetes`.
 
 # Table of Contents
 1. [Prerequisites](#Prerequisites)
@@ -21,7 +21,7 @@ See also [the Nephio Learning Resource](https://github.com/nephio-project/docs/b
 
 ## Prerequisites
 
-The tutorial can be executed on a Linux VM or directly on a laptop. It has been verified to execute on a Macbook Pro M1 machine.
+The tutorial can be executed on a Linux VM or directly on a laptop. It has been verified to execute on a Macbook Pro M1 machine and an Ubuntu 20.04 VM.
 
 The following software should be installed prior to running through the tutorial:
 1. [git](https://git-scm.com/)
@@ -33,6 +33,14 @@ The following software should be installed prior to running through the tutorial
 7. [Visual Studio Code](https://code.visualstudio.com/download)
 8. [VS Code extensions for go](https://code.visualstudio.com/docs/languages/go)
 9. [yq yaml query utility](https://mikefarah.gitbook.io/yq/)
+
+## Clone the repo and cd into it
+
+```
+git clone https://github.com/Nordix/nordix-nephio.git
+
+cd nordix-nephio/tutorials/starting-with-porch/
+```
 
 ## Create the Kind clusters for management and edge1
 
@@ -50,10 +58,11 @@ kind get kubeconfig --name=management > ~/.kube/kind-management-config
 kind get kubeconfig --name=edge1 > ~/.kube/kind-edge1-config
 ```
 
-Toggle kubectl between the clusters:
+Toggling kubectl between the clusters:
 
 ```
 export KUBECONFIG=~/.kube/kind-management-config
+
 export KUBECONFIG=~/.kube/kind-edge1-config
 ```
 
@@ -72,23 +81,37 @@ kubectl wait --namespace metallb-system \
 Check the subnet that is being used by the `kind` network in docker
 ```
 docker network inspect kind | grep Subnet
-                    "Subnet": "172.18.0.0/16",
-                    "Subnet": "fc00:f853:ccd:e793::/64"
 ```
+
+Sample output:
+```
+"Subnet": "172.18.0.0/16",
+"Subnet": "fc00:f853:ccd:e793::/64"
+```
+
 Edit the `metallb-conf.yaml` file and ensure the `spec.addresses` range is in the IPv4 subnet being used by the `kind` network in docker.
+```
+...
+spec:
+  addresses:
+  - 172.18.255.200-172.18.255.250
+...
+```
 
 Apply the MetalLB configuration:
 ```
 kubectl apply -f metallb-conf.yaml
 ```
 
-## Deploy and set up gitea on the management cluster
+## Deploy and set up gitea on the management cluster using kpt
 
 Get the gitea kpt package:
 
 ```
 export KUBECONFIG=~/.kube/kind-management-config
+
 cd kpt_packages
+
 kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/gitea
 ```
 
@@ -100,7 +123,7 @@ Comment out the preconfigured IP address from the `service-gitea-yaml` file in t
 >     #    metallb.universe.tf/loadBalancerIPs: 172.18.0.200
 ```
 
-Now render and apply the Gitea Kpt package:
+Now render, init and apply the Gitea Kpt package:
 ```
 kpt fn render gitea
 kpt live init gitea # You only need to do this command once
@@ -111,6 +134,7 @@ Once the package is applied, all the gitea pods should come up and you should be
 
 ```
 kubectl get svc -n gitea gitea
+
 NAME    TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)                       AGE
 gitea   LoadBalancer   10.96.243.120   172.18.255.200   22:31305/TCP,3000:31102/TCP   10m
 ```
@@ -174,9 +198,12 @@ cd ..
 
 ## Install Porch
 
-We will use the Porch Kpt package from Nephio and we will update the kpt package to use the images generated for Porch in Nephio.
+We will use the Porch Kpt package from Nephio and update the kpt package to use the images generated for Porch in Nephio.
 ```
+cd kpt_packages
+
 kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/porch-dev
+
 cd porch-dev
 ```
 
@@ -276,10 +303,22 @@ Configsync is installed on the `edge1` cluster so that it syncs the contents of 
 
 ```
 export KUBECONFIG=~/.kube/kind-edge1-config
+
+cd kpt_packages
+
 kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/configsync
 kpt fn render configsync
 kpt live init configsync
 kpt live apply configsync
+```
+
+Check that the configsync PODs are up and running:
+```
+kubectl get pod -n config-management-system
+NAME                                          READY   STATUS    RESTARTS   AGE
+config-management-operator-6946b77565-f45pc   1/1     Running   0          118m
+reconciler-manager-5b5d8557-gnhb2             2/2     Running   0          118m
+root-reconciler-edge1-68576f878c-v24wt        4/4     Running   0          105m
 ```
 
 Now, we need to set up a Rootsync CR to synchronize the `edge1` repo:
@@ -296,7 +335,7 @@ Edit the `package-context.yaml` file to set the name of the cluster/repo we are 
 >   name: edge1
 ```
 
-Render the package, this configures the `rootsync.yaml` file in the Kpt package:
+Render the package. This configures the `rootsync.yaml` file in the Kpt package:
 ```
 kpt fn render rootsync
 ```
@@ -1253,7 +1292,7 @@ status:
 
 ## The porchctl command
 
-When Porch was ported to Nephio, the `kpt alpha rpkg` commands in kpt were moved into a new comand called `porchctl`. Porch is as yet not released in Nephio, so we need to build the `porchctl` command from source.
+When Porch was ported to Nephio, the `kpt alpha rpkg` commands in kpt were moved into a new command called `porchctl`. Porch is as yet not released in Nephio, so we need to build the `porchctl` command from source.
 
 ```
 git clone https://github.com/nephio-project/porch.git
@@ -1296,7 +1335,7 @@ Use "porchctl [command] --help" for more information about a command.
 
 _optional: Configure `porchctl` on your environment_
 
-1. Either add `porchctl` to your PAT or copy it to a directory already in the path
+1. Either add `porchctl` to your PATH or copy it to a directory already in the path
 ```
 sudo cp ~/work/porch/porch/build/porchctl /usr/local/bin
 ```
@@ -1332,7 +1371,7 @@ The commands for administering package revisions are:
 
 
 <details>
-<summary>Check that `porchctl` lists our repos:</summary>
+<summary>Check that <code>porchctl</code> lists our repos:</summary>
 
 ```
 build/porchctl repo -n porch-demo get
@@ -1344,7 +1383,7 @@ management            git    Package   false        True    http://172.18.255.20
 </details>
 
 <details>
-<summary>Check that `porchctl` lists our remote packages (PackageRevisions):</summary>
+<summary>Check that <code>porchctl</code> lists our remote packages (PackageRevisions):</summary>
 
 ```
 build/porchctl rpkg -n porch-demo get
@@ -1396,7 +1435,7 @@ management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1     
 
 This command creates a new PackageRevision CR in porch and also creates a branch called `network-function/v1` in our gitea `management` repo. Use the Gitea web UI to confirm that the pranch ahs been created and note that it only has default content as yet.
 
-> This step is a workaround for a possible bug. The `porchctl rpkg push` command expects a `.KptRevisionMetadata` file to exist in the directory from which we are psuhing the package contents. The following command reads the `KptRevisionMetadata` from the PackageRevision we have just created and stores it in that file:
+> This step is a workaround for a possible bug. The `porchctl rpkg push` command expects a `.KptRevisionMetadata` file to exist in the directory from which we are pushing the package contents. The following command reads the `KptRevisionMetadata` from the PackageRevision we have just created and stores it in that file:
 
 ```
 porchctl -n porch-demo rpkg pull management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 | yq '.items[0]' > blueprints/network-function/.KptRevisionMetadata
@@ -1428,16 +1467,17 @@ management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1     
 
 ```
 
-Once we approve the package, the package is merged into the main branch in the `management` repo and the branch called `network-function/v1` in that repo is removed. Use the Gite UI to verify this. We now have our blueprint package in our `management` repo and we can deploy this package into workload clusters.
+Once we approve the package, the package is merged into the main branch in the `management` repo and the branch called `network-function/v1` in that repo is removed. Use the Gitea UI to verify this. We now have our blueprint package in our `management` repo and we can deploy this package into workload clusters.
 
 ## Deploying a blueprint onto a workload cluster
 
-The process of deploying a blueprint package from our `management` repo clones the package, then modifies it for use ont he workload cluster. The cloned package is then iitialized, pushed, proposed, and approved onto the `edge1` repo. Remember that the `edge1` repo is being monitored by Configsync from the `edge1` cluster, so once the package appears in the `edge1` repo on the management cluster, it will be pulled by Configsync and applied to the `edge1` cluster.
+The process of deploying a blueprint package from our `management` repo clones the package, then modifies it for use on the workload cluster. The cloned package is then initialized, pushed, proposed, and approved onto the `edge1` repo. Remember that the `edge1` repo is being monitored by Configsync from the `edge1` cluster, so once the package appears in the `edge1` repo on the management cluster, it will be pulled by Configsync and applied to the `edge1` cluster.
 
 ```
 porchctl -n porch-demo rpkg pull management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82 tmp_pacakges_for_deployment/edge1-network-function
 
-find tmp_pacakges_for_deployment/edge1-network-function 
+find tmp_pacakges_for_deployment/edge1-network-function
+
 tmp_pacakges_for_deployment/edge1-network-function
 tmp_pacakges_for_deployment/edge1-network-function/deployment.yaml
 tmp_pacakges_for_deployment/edge1-network-function/.KptRevisionMetadata
@@ -1481,9 +1521,11 @@ No resources found in network-function-a namespace.
 
 ```
 
-We now propose and approve the deployment package, which merges the package to the `edge1` repo and further triggers Configsync to apply the pacakge to the `edge1` cluster.
+We now propose and approve the deployment package, which merges the package to the `edge1` repo and further triggers Configsync to apply the package to the `edge1` cluster.
 
 ```
+export KUBECONFIG=~/.kube/kind-management-config
+
 porchctl -n porch-demo rpkg propose edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946
 edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946 proposed
 
@@ -1518,170 +1560,3 @@ The PackageVariant CR is defined in the [simple-variant.yaml](simple-variant.yam
 
 > Use `kubectl explain PackageVariantSet` to get help on the structure of the PackageVariantSet CRD.
 
-Applying the PackageVariantSet creates the new packages as draft packages:
-
-```
-kubectl apply -f simple-variant.yaml
-kubectl get PackageRevisions -n porch-demo | grep -v 'external-blueprints'
-NAME                                                           PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
-edge1-bc8294d121360ad305c9a826a8734adcf5f1b9c0                 network-function-a   v1                 main       false    Published   edge1
-edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946                 network-function-a   v1                 v1         true     Published   edge1
-edge1-a31b56c7db509652f00724dd49746660757cd98a                 network-function-b   packagevariant-1              false    Draft       edge1
-edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4                 network-function-c   packagevariant-1              false    Draft       edge1
-management-49580fc22bcf3bf51d334a00b6baa41df597219e            network-function     v1                 main       false    Published   management
-management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82            network-function     v1                 v1         true     Published   management
-
-porchctl -n porch-demo rpkg get --name network-function-b
-NAME                                             PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
-edge1-a31b56c7db509652f00724dd49746660757cd98a   network-function-b   packagevariant-1              false    Draft       edge1
-
-porchctl -n porch-demo rpkg get --name network-function-c
-NAME                                             PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
-edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4   network-function-c   packagevariant-1              false    Draft       edge1
-
-```
-
-We can see that our two new packages are created as draft packages on the edge1 repo. We can also examine the PacakgeVariant CRs that have been created:
-```
-kubectl get PackageVariant -n porch-demo
-NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
-network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
-network-function-b             network-function-9779fc9f5-6zwhh                    1/1     Running   0               76s
-network-function-c             network-function-9779fc9f5-h7nsb                    1/1     Running   0               41s
-```
-
-<details>
-<summary>It is also intereting to examine the yaml of the PackageVariant:</summary>
-```
-kubectl get PackageVariant -n porch-demo -o yaml
-apiVersion: v1
-items:
-- apiVersion: config.porch.kpt.dev/v1alpha1
-  kind: PackageVariant
-  metadata:
-    creationTimestamp: "2024-01-09T15:00:00Z"
-    finalizers:
-    - config.porch.kpt.dev/packagevariants
-    generation: 1
-    labels:
-      config.porch.kpt.dev/packagevariantset: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
-    name: network-function-edge1-network-function-b
-    namespace: porch-demo
-    ownerReferences:
-    - apiVersion: config.porch.kpt.dev/v1alpha2
-      controller: true
-      kind: PackageVariantSet
-      name: network-function
-      uid: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
-    resourceVersion: "237053"
-    uid: 7a81099c-5a0b-49d8-b73c-48e33cd134e5
-  spec:
-    downstream:
-      package: network-function-b
-      repo: edge1
-    upstream:
-      package: network-function
-      repo: management
-      revision: v1
-  status:
-    conditions:
-    - lastTransitionTime: "2024-01-09T15:00:00Z"
-      message: all validation checks passed
-      reason: Valid
-      status: "False"
-      type: Stalled
-    - lastTransitionTime: "2024-01-09T15:00:31Z"
-      message: successfully ensured downstream package variant
-      reason: NoErrors
-      status: "True"
-      type: Ready
-    downstreamTargets:
-    - name: edge1-a31b56c7db509652f00724dd49746660757cd98a
-- apiVersion: config.porch.kpt.dev/v1alpha1
-  kind: PackageVariant
-  metadata:
-    creationTimestamp: "2024-01-09T15:00:00Z"
-    finalizers:
-    - config.porch.kpt.dev/packagevariants
-    generation: 1
-    labels:
-      config.porch.kpt.dev/packagevariantset: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
-    name: network-function-edge1-network-function-c
-    namespace: porch-demo
-    ownerReferences:
-    - apiVersion: config.porch.kpt.dev/v1alpha2
-      controller: true
-      kind: PackageVariantSet
-      name: network-function
-      uid: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
-    resourceVersion: "237056"
-    uid: da037d0a-9a7a-4e85-842c-1324e9da819a
-  spec:
-    downstream:
-      package: network-function-c
-      repo: edge1
-    upstream:
-      package: network-function
-      repo: management
-      revision: v1
-  status:
-    conditions:
-    - lastTransitionTime: "2024-01-09T15:00:01Z"
-      message: all validation checks passed
-      reason: Valid
-      status: "False"
-      type: Stalled
-    - lastTransitionTime: "2024-01-09T15:00:31Z"
-      message: successfully ensured downstream package variant
-      reason: NoErrors
-      status: "True"
-      type: Ready
-    downstreamTargets:
-    - name: edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4
-kind: List
-metadata:
-  resourceVersion: ""
-```
-</details>
-
-We now want to customize and deploy our two packages. To do this we must pull the pacakges locally, render the kpt functions, and then push the rendered packages back up to the `edge1` repo.
-
-> **_QUESTGION_**: Can the Porch GUI can do this next sequence of steps more automatically.
-
-```
-porchctl rpkg pull edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
-kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-b -- namespace=network-function-b
-porchctl rpkg push edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
-
-porchctl rpkg pull edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 tmp_pacakges_for_deployment/edge1-network-function-c --namespace=porch-demo
-kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-c -- namespace=network-function-c
-porchctl rpkg push edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 tmp_pacakges_for_deployment/edge1-network-function-c --namespace=porch-demo
-```
-
-Check that the namespace has been updated onthe two packages in the `edge1` repo using the Gitea web UI.
-
-Now our two packages are ready for deployment:
-
-```
-porchctl rpkg propose edge1-a31b56c7db509652f00724dd49746660757cd98a --namespace=porch-demo
-edge1-a31b56c7db509652f00724dd49746660757cd98a proposed
-
-porchctl rpkg approve edge1-a31b56c7db509652f00724dd49746660757cd98a --namespace=porch-demo
-edge1-a31b56c7db509652f00724dd49746660757cd98a approved
-
-porchctl rpkg propose edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 --namespace=porch-demo
-edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 proposed
-
-porchctl rpkg approve edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 --namespace=porch-demo
-edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 approved
-```
-
-We can now check that the `network-function-b` and `network-function-c` packages are deployed on the edge1 cluster and that the pods are running
-```
-export KUBECONFIG=~/.kube/kind-edge1-config
-
-NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
-network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
-network-function-b             network-function-9779fc9f5-6zwhh                    1/1     Running   0               76s
-network-function-c             network-function-9779fc9f5-h7nsb                    1/1     Running   0               41s
-```
