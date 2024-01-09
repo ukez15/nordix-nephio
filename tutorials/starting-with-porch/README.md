@@ -1541,7 +1541,108 @@ edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4   network-function-c   packagevar
 
 ```
 
-We can see that our two new packages are created as draft packages on the edge1 repo.
+We can see that our two new packages are created as draft packages on the edge1 repo. We can also examine the PacakgeVariant CRs that have been created:
+```
+kubectl get PackageVariant -n porch-demo
+NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
+network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
+network-function-b             network-function-9779fc9f5-6zwhh                    1/1     Running   0               76s
+network-function-c             network-function-9779fc9f5-h7nsb                    1/1     Running   0               41s
+```
+
+<details>
+<summary>It is also intereting to examine the yaml of the PackageVariant:</summary>
+```
+kubectl get PackageVariant -n porch-demo -o yaml
+apiVersion: v1
+items:
+- apiVersion: config.porch.kpt.dev/v1alpha1
+  kind: PackageVariant
+  metadata:
+    creationTimestamp: "2024-01-09T15:00:00Z"
+    finalizers:
+    - config.porch.kpt.dev/packagevariants
+    generation: 1
+    labels:
+      config.porch.kpt.dev/packagevariantset: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    name: network-function-edge1-network-function-b
+    namespace: porch-demo
+    ownerReferences:
+    - apiVersion: config.porch.kpt.dev/v1alpha2
+      controller: true
+      kind: PackageVariantSet
+      name: network-function
+      uid: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    resourceVersion: "237053"
+    uid: 7a81099c-5a0b-49d8-b73c-48e33cd134e5
+  spec:
+    downstream:
+      package: network-function-b
+      repo: edge1
+    upstream:
+      package: network-function
+      repo: management
+      revision: v1
+  status:
+    conditions:
+    - lastTransitionTime: "2024-01-09T15:00:00Z"
+      message: all validation checks passed
+      reason: Valid
+      status: "False"
+      type: Stalled
+    - lastTransitionTime: "2024-01-09T15:00:31Z"
+      message: successfully ensured downstream package variant
+      reason: NoErrors
+      status: "True"
+      type: Ready
+    downstreamTargets:
+    - name: edge1-a31b56c7db509652f00724dd49746660757cd98a
+- apiVersion: config.porch.kpt.dev/v1alpha1
+  kind: PackageVariant
+  metadata:
+    creationTimestamp: "2024-01-09T15:00:00Z"
+    finalizers:
+    - config.porch.kpt.dev/packagevariants
+    generation: 1
+    labels:
+      config.porch.kpt.dev/packagevariantset: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    name: network-function-edge1-network-function-c
+    namespace: porch-demo
+    ownerReferences:
+    - apiVersion: config.porch.kpt.dev/v1alpha2
+      controller: true
+      kind: PackageVariantSet
+      name: network-function
+      uid: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    resourceVersion: "237056"
+    uid: da037d0a-9a7a-4e85-842c-1324e9da819a
+  spec:
+    downstream:
+      package: network-function-c
+      repo: edge1
+    upstream:
+      package: network-function
+      repo: management
+      revision: v1
+  status:
+    conditions:
+    - lastTransitionTime: "2024-01-09T15:00:01Z"
+      message: all validation checks passed
+      reason: Valid
+      status: "False"
+      type: Stalled
+    - lastTransitionTime: "2024-01-09T15:00:31Z"
+      message: successfully ensured downstream package variant
+      reason: NoErrors
+      status: "True"
+      type: Ready
+    downstreamTargets:
+    - name: edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4
+kind: List
+metadata:
+  resourceVersion: ""
+```
+</details>
 
 We now want to customize and deploy our two packages. To do this we must pull the pacakges locally, render the kpt functions, and then push the rendered packages back up to the `edge1` repo.
 
