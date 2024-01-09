@@ -1560,3 +1560,161 @@ The PackageVariant CR is defined in the [simple-variant.yaml](simple-variant.yam
 
 > Use `kubectl explain PackageVariantSet` to get help on the structure of the PackageVariantSet CRD.
 
+Applying the PackageVariantSet creates the new packages as draft packages:
+
+```
+kubectl apply -f simple-variant.yaml
+kubectl get PackageRevisions -n porch-demo | grep -v 'external-blueprints'
+NAME                                                           PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
+edge1-bc8294d121360ad305c9a826a8734adcf5f1b9c0                 network-function-a   v1                 main       false    Published   edge1
+edge1-9b4b4d99c43b5c5c8489a47bbce9a61f79904946                 network-function-a   v1                 v1         true     Published   edge1
+edge1-a31b56c7db509652f00724dd49746660757cd98a                 network-function-b   packagevariant-1              false    Draft       edge1
+edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4                 network-function-c   packagevariant-1              false    Draft       edge1
+management-49580fc22bcf3bf51d334a00b6baa41df597219e            network-function     v1                 main       false    Published   management
+management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82            network-function     v1                 v1         true     Published   management
+porchctl -n porch-demo rpkg get --name network-function-b
+NAME                                             PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
+edge1-a31b56c7db509652f00724dd49746660757cd98a   network-function-b   packagevariant-1              false    Draft       edge1
+porchctl -n porch-demo rpkg get --name network-function-c
+NAME                                             PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
+edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4   network-function-c   packagevariant-1              false    Draft       edge1
+```
+
+We can see that our two new packages are created as draft packages on the edge1 repo. We can also examine the PacakgeVariant CRs that have been created:
+```
+kubectl get PackageVariant -n porch-demo
+NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
+network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
+network-function-b             network-function-9779fc9f5-6zwhh                    1/1     Running   0               76s
+network-function-c             network-function-9779fc9f5-h7nsb                    1/1     Running   0               41s
+```
+
+<details>
+<summary>It is also intereting to examine the yaml of the PackageVariant:</summary>
+```
+kubectl get PackageVariant -n porch-demo -o yaml
+apiVersion: v1
+items:
+- apiVersion: config.porch.kpt.dev/v1alpha1
+  kind: PackageVariant
+  metadata:
+    creationTimestamp: "2024-01-09T15:00:00Z"
+    finalizers:
+    - config.porch.kpt.dev/packagevariants
+    generation: 1
+    labels:
+      config.porch.kpt.dev/packagevariantset: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    name: network-function-edge1-network-function-b
+    namespace: porch-demo
+    ownerReferences:
+    - apiVersion: config.porch.kpt.dev/v1alpha2
+      controller: true
+      kind: PackageVariantSet
+      name: network-function
+      uid: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    resourceVersion: "237053"
+    uid: 7a81099c-5a0b-49d8-b73c-48e33cd134e5
+  spec:
+    downstream:
+      package: network-function-b
+      repo: edge1
+    upstream:
+      package: network-function
+      repo: management
+      revision: v1
+  status:
+    conditions:
+    - lastTransitionTime: "2024-01-09T15:00:00Z"
+      message: all validation checks passed
+      reason: Valid
+      status: "False"
+      type: Stalled
+    - lastTransitionTime: "2024-01-09T15:00:31Z"
+      message: successfully ensured downstream package variant
+      reason: NoErrors
+      status: "True"
+      type: Ready
+    downstreamTargets:
+    - name: edge1-a31b56c7db509652f00724dd49746660757cd98a
+- apiVersion: config.porch.kpt.dev/v1alpha1
+  kind: PackageVariant
+  metadata:
+    creationTimestamp: "2024-01-09T15:00:00Z"
+    finalizers:
+    - config.porch.kpt.dev/packagevariants
+    generation: 1
+    labels:
+      config.porch.kpt.dev/packagevariantset: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    name: network-function-edge1-network-function-c
+    namespace: porch-demo
+    ownerReferences:
+    - apiVersion: config.porch.kpt.dev/v1alpha2
+      controller: true
+      kind: PackageVariantSet
+      name: network-function
+      uid: a923d4fc-a3a7-437c-84d1-52b30dd6cf49
+    resourceVersion: "237056"
+    uid: da037d0a-9a7a-4e85-842c-1324e9da819a
+  spec:
+    downstream:
+      package: network-function-c
+      repo: edge1
+    upstream:
+      package: network-function
+      repo: management
+      revision: v1
+  status:
+    conditions:
+    - lastTransitionTime: "2024-01-09T15:00:01Z"
+      message: all validation checks passed
+      reason: Valid
+      status: "False"
+      type: Stalled
+    - lastTransitionTime: "2024-01-09T15:00:31Z"
+      message: successfully ensured downstream package variant
+      reason: NoErrors
+      status: "True"
+      type: Ready
+    downstreamTargets:
+    - name: edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4
+kind: List
+metadata:
+  resourceVersion: ""
+```
+</details>
+
+We now want to customize and deploy our two packages. To do this we must pull the pacakges locally, render the kpt functions, and then push the rendered packages back up to the `edge1` repo.
+
+> **_QUESTGION_**: Can the Porch GUI can do this next sequence of steps more automatically.
+```
+porchctl rpkg pull edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
+kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-b -- namespace=network-function-b
+porchctl rpkg push edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
+porchctl rpkg pull edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 tmp_pacakges_for_deployment/edge1-network-function-c --namespace=porch-demo
+kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-c -- namespace=network-function-c
+porchctl rpkg push edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 tmp_pacakges_for_deployment/edge1-network-function-c --namespace=porch-demo
+```
+
+Check that the namespace has been updated onthe two packages in the `edge1` repo using the Gitea web UI.
+
+Now our two packages are ready for deployment:
+
+```
+porchctl rpkg propose edge1-a31b56c7db509652f00724dd49746660757cd98a --namespace=porch-demo
+edge1-a31b56c7db509652f00724dd49746660757cd98a proposed
+porchctl rpkg approve edge1-a31b56c7db509652f00724dd49746660757cd98a --namespace=porch-demo
+edge1-a31b56c7db509652f00724dd49746660757cd98a approved
+porchctl rpkg propose edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 --namespace=porch-demo
+edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 proposed
+porchctl rpkg approve edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 --namespace=porch-demo
+edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 approved
+```
+
+We can now check that the `network-function-b` and `network-function-c` packages are deployed on the edge1 cluster and that the pods are running
+```
+export KUBECONFIG=~/.kube/kind-edge1-config
+NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
+network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
+network-function-b             network-function-9779fc9f5-6zwhh                    1/1     Running   0               76s
+network-function-c             network-function-9779fc9f5-h7nsb                    1/1     Running   0               41s
+```
