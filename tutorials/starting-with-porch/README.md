@@ -15,6 +15,7 @@ This tutorial is a guide to installing and using Porch. is based on the [Porch d
 10. [The porchctl command](#The-porchctl-command)
 11. [Creating a blueprint in Porch](#Creating-a-blueprint-in-Porch)
 12. [Deploying a blueprint onto a workload cluster](#Deploying-a-blueprint-onto-a-workload-cluster)
+13. [Deploying using Package Variant Sets](#Deploying-using-Package-Variant-Sets)
 
 See also [the Nephio Learning Resource](https://github.com/nephio-project/docs/blob/main/learning.md) page for background help and information.
 
@@ -207,6 +208,36 @@ Edit the `9-controllers.yaml.old `9-controllers.yaml` file:
 >         image: docker.io/nephio/porch-controllers:latest
 ```
 
+Now we can install porch. We render the kpt package and then init and apply it.
+
+```
+cd ..
+kpt fn render porch-dev
+kpt live init porch-dev # You only need to do this command once
+kpt live apply porch-dev
+```
+Check that the Porch PODs are running on the management cluster:
+```
+kubectl get pod -n porch-system
+NAME                                 READY   STATUS    RESTARTS   AGE
+function-runner-7994f65554-bf2qz     1/1     Running   0          3d21h
+function-runner-7994f65554-ml6qb     1/1     Running   0          3d21h
+porch-controllers-7fb4497b77-285w5   1/1     Running   0          3d21h
+porch-server-68bfdddbbf-fz9br        1/1     Running   0          3d21h
+```
+Check that the Porch CRDs and other resources have been created:
+```
+kubectl api-resources | grep porch   
+packagerevs                                    config.porch.kpt.dev/v1alpha1          true         PackageRev
+packagevariants                                config.porch.kpt.dev/v1alpha1          true         PackageVariant
+packagevariantsets                             config.porch.kpt.dev/v1alpha2          true         PackageVariantSet
+repositories                                   config.porch.kpt.dev/v1alpha1          true         Repository
+functions                                      porch.kpt.dev/v1alpha1                 true         Function
+packagerevisionresources                       porch.kpt.dev/v1alpha1                 true         PackageRevisionResources
+packagerevisions                               porch.kpt.dev/v1alpha1                 true         PackageRevision
+packages                                       porch.kpt.dev/v1alpha1                 true         Package
+```
+
 ## Connect the Gitea repositories to Porch
 
 Create a demo namespace:
@@ -285,6 +316,20 @@ Edit the `rootsync.yaml` file to set the IP address of Gitea and to turn off aut
 > #    auth: token
 > #    secretRef:
 > #      name: edge1-access-token-configsync
+```
+
+Initialize and apply rootsync:
+```
+export KUBECONFIG=~/.kube/kind-edge1-config
+
+kpt live init rootsync # This command is only needed once
+kpt live apply rootsync
+```
+Check that the RootSync CR is created:
+```
+kubectl get rootsync -n config-management-system
+NAME    RENDERINGCOMMIT                            RENDERINGERRORCOUNT   SOURCECOMMIT                               SOURCEERRORCOUNT   SYNCCOMMIT                                 SYNCERRORCOUNT
+edge1   613eb1ad5632d95c4336894f8a128cc871fb3266                         613eb1ad5632d95c4336894f8a128cc871fb3266                      613eb1ad5632d95c4336894f8a128cc871fb3266   
 ```
 
 Check that Configsync is synchronized with the repo on the management cluster:
@@ -1464,3 +1509,12 @@ kubectl get pod -n network-function-a
 NAME                               READY   STATUS    RESTARTS   AGE
 network-function-9779fc9f5-2tswc   1/1     Running   0          9s
 ```
+
+## Deploying using Package Variant Sets
+
+The PackageVariant CR is defined in the [simple-variant.yaml](simple-variant.yaml) file. In this very simple PackageVariant, the `network-function` package in the `management` repo is cloned into the `edge1` repo as the `network-function-b` and `network-function-c` package variants.
+
+> **_NOTE:_**  This simple package variant does not specify any configuration changes. Normally, as well as cloning and renaming, configuration changes would be applied on a package variant.
+
+> Use `kubectl explain PackageVariantSet` to get help on the structure of the PackageVariantSet CRD.
+
