@@ -200,7 +200,7 @@ Edit the `3-porch-server.yaml` file:
 >           image: docker.io/nephio/porch-server:latest
 ```
 
-Edit the `9-controllers.yaml.old `9-controllers.yaml` file:
+Edit the `9-controllers.yaml` file:
 ```
 45c45
 <         image: gcr.io/kpt-dev/porch-controllers:v0.0.27
