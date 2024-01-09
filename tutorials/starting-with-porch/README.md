@@ -318,7 +318,6 @@ kubectl get pod -n config-management-system
 NAME                                          READY   STATUS    RESTARTS   AGE
 config-management-operator-6946b77565-f45pc   1/1     Running   0          118m
 reconciler-manager-5b5d8557-gnhb2             2/2     Running   0          118m
-root-reconciler-edge1-68576f878c-v24wt        4/4     Running   0          105m
 ```
 
 Now, we need to set up a Rootsync CR to synchronize the `edge1` repo:
