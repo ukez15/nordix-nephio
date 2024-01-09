@@ -1563,6 +1563,7 @@ Applying the PackageVariantSet creates the new packages as draft packages:
 
 ```
 kubectl apply -f simple-variant.yaml
+
 kubectl get PackageRevisions -n porch-demo | grep -v 'external-blueprints'
 NAME                                                           PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
 edge1-bc8294d121360ad305c9a826a8734adcf5f1b9c0                 network-function-a   v1                 main       false    Published   edge1
@@ -1571,9 +1572,11 @@ edge1-a31b56c7db509652f00724dd49746660757cd98a                 network-function-
 edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4                 network-function-c   packagevariant-1              false    Draft       edge1
 management-49580fc22bcf3bf51d334a00b6baa41df597219e            network-function     v1                 main       false    Published   management
 management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82            network-function     v1                 v1         true     Published   management
+
 porchctl -n porch-demo rpkg get --name network-function-b
 NAME                                             PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
 edge1-a31b56c7db509652f00724dd49746660757cd98a   network-function-b   packagevariant-1              false    Draft       edge1
+
 porchctl -n porch-demo rpkg get --name network-function-c
 NAME                                             PACKAGE              WORKSPACENAME      REVISION   LATEST   LIFECYCLE   REPOSITORY
 edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4   network-function-c   packagevariant-1              false    Draft       edge1
@@ -1689,6 +1692,7 @@ We now want to customize and deploy our two packages. To do this we must pull th
 porchctl rpkg pull edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
 kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-b -- namespace=network-function-b
 porchctl rpkg push edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
+
 porchctl rpkg pull edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 tmp_pacakges_for_deployment/edge1-network-function-c --namespace=porch-demo
 kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-c -- namespace=network-function-c
 porchctl rpkg push edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 tmp_pacakges_for_deployment/edge1-network-function-c --namespace=porch-demo
@@ -1715,6 +1719,7 @@ edge1-ee14f7ce850ddb0a380cf201d86f48419dc291f4 approved
 We can now check that the `network-function-b` and `network-function-c` packages are deployed on the edge1 cluster and that the pods are running
 ```
 export KUBECONFIG=~/.kube/kind-edge1-config
+
 kubectl get pod -A | egrep '(NAMESPACE|network-function)'
 NAMESPACE                      NAME                                                READY   STATUS    RESTARTS        AGE
 network-function-a             network-function-9779fc9f5-2tswc                    1/1     Running   0               19h
