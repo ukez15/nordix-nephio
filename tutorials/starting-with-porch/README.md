@@ -1687,7 +1687,7 @@ metadata:
 
 We now want to customize and deploy our two packages. To do this we must pull the pacakges locally, render the kpt functions, and then push the rendered packages back up to the `edge1` repo.
 
-> **_QUESTION_**: Can the Porch GUI can do this next sequence of steps more automatically.
+> **_QUESTION_**: Can the Porch GUI can do this next sequence of steps more automatically?
 ```
 porchctl rpkg pull edge1-a31b56c7db509652f00724dd49746660757cd98a tmp_pacakges_for_deployment/edge1-network-function-b --namespace=porch-demo
 kpt fn eval --image=gcr.io/kpt-fn/set-namespace:v0.4.1 tmp_pacakges_for_deployment/edge1-network-function-b -- namespace=network-function-b
