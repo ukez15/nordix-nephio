@@ -7,7 +7,7 @@ This tutorial is a guide to installing and using Porch. It is based on the [Porc
 2. [Create the Kind clusters for management and edge1](#Create-the-Kind-clusters-for-management-and-edge1)
 3. [Install MetalLB on the management cluster](#Install-MetalLB-on-the-management-cluster)
 4. [Deploy and set up gitea on the management cluster](#Deploy-and-set-up-gitea-on-the-management-cluster)
-5. [Create repositories on Gitea for `management` and `edge1`](#Create-repositories-on-Gitea-for-`management`-and-`edge1`)
+5. [Create repositories on Gitea for `management` and `edge1`](#Create-repositories-on-Gitea-for-management-and-edge1)
 6. [Install Porch](#Install-Porch)
 7. [Connect the Gitea repositories to Porch](#Connect-the-Gitea-repositories-to-Porch)
 8. [Configure configsync on the workload cluster](#Configure-configsync-on-the-workload-cluster)
@@ -142,7 +142,7 @@ The UI is available at http://172.18.255.200:3000 in the example above.
 
 To login to Gitea, use the credentials `nephio:secret`.
 
-## Create repositories on Gitea for `management` and `edge1`
+## Create repositories on Gitea for management and edge1
 
 On the gitea UI, click the '+' opposite "Repositories" and fill in the form for both the `management` and `edge1` repositories. Use default values except for the following fields:
 
