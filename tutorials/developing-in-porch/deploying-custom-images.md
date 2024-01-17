@@ -9,7 +9,7 @@ This section covers the process to build and deploy the porch images to a given 
 4. [Teardown the custom porch deployment](#Teardown-the-custom-porch-deployment)
 
 ## Prerequisites
-This guide assumes that **steps 1 to 6** of the [Starting with Porch](#../starting-with-porch/README.md) tutorial have been executed.
+This guide assumes that **steps 1 to 6** of the [Starting with Porch](../starting-with-porch/README.md) tutorial have been executed.
 
 ## Clone Porch and deploy with custom images
 Clone the [porch project](https://github.com/nephio-project/porch.git)  from Github onto your environment using whatever cloning process for development your organization recommends. 
