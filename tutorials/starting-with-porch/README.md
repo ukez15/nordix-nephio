@@ -112,10 +112,10 @@ export KUBECONFIG=~/.kube/kind-management-config
 
 cd kpt_packages
 
-kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/gitea
+kpt pkg get https://github.com/nephio-project/catalog/tree/main/distros/sandbox/gitea
 ```
 
-Comment out the preconfigured IP address from the `service-gitea-yaml` file in the gitea Kpt package:
+Comment out the preconfigured IP address from the `gitea/service-gitea.yaml` file in the gitea Kpt package:
 ```
 11c11
 <     metallb.universe.tf/loadBalancerIPs: 172.18.0.200
@@ -283,7 +283,7 @@ export KUBECONFIG=~/.kube/kind-edge1-config
 
 cd kpt_packages
 
-kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/configsync
+kpt pkg get https://github.com/nephio-project/catalog/tree/main/nephio/core/configsync
 kpt fn render configsync
 kpt live init configsync
 kpt live apply configsync
@@ -300,10 +300,10 @@ reconciler-manager-5b5d8557-gnhb2             2/2     Running   0          118m
 Now, we need to set up a Rootsync CR to synchronize the `edge1` repo:
 
 ```
-kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/rootsync
+kpt pkg get https://github.com/nephio-project/catalog/tree/main/nephio/optional/rootsync
 ```
 
-Edit the `package-context.yaml` file to set the name of the cluster/repo we are syncing from/to:
+Edit the `rootsync/package-context.yaml` file to set the name of the cluster/repo we are syncing from/to:
 ```
 9c9
 <   name: example-rootsync
@@ -311,12 +311,12 @@ Edit the `package-context.yaml` file to set the name of the cluster/repo we are 
 >   name: edge1
 ```
 
-Render the package. This configures the `rootsync.yaml` file in the Kpt package:
+Render the package. This configures the `rootsync/rootsync.yaml` file in the Kpt package:
 ```
 kpt fn render rootsync
 ```
 
-Edit the `rootsync.yaml` file to set the IP address of Gitea and to turn off authentication for accessing gitea:
+Edit the `rootsync/rootsync.yaml` file to set the IP address of Gitea and to turn off authentication for accessing gitea:
 ```
 11c11
 <     repo: http://172.18.0.200:3000/nephio/example-cluster-name.git
@@ -1399,7 +1399,7 @@ The output above is similar to the output of `kubectl get packagerevision -n por
 
 ## Creating a blueprint in Porch
 
-Create a new pacakge in our `management` repo using the sample `network-function` package provided.
+Create a new package in our `management` repo using the sample `network-function` package provided.
 
 ```
 porchctl -n porch-demo rpkg init network-function --repository=management --workspace=v1
