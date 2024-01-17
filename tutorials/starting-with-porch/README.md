@@ -149,16 +149,24 @@ On the gitea UI, click the '+' opposite "Repositories" and fill in the form for 
 - Repository Name: "Management" or "edge1"
 - Description: Something appropriate
  
- Now initialize both repos with an initial commit. Create a `repositories` directory locally and enter it.
+Alternatively, we can create the repos via curl:
+```
+curl -k -H "content-type: application/json" "http://nephio:secret@172.18.255.200:3000/api/v1/user/repos" --data '{"name":"management"}'
 
- ```
- mkdir reposiories
- cd repositories
- ```
+curl -k -H "content-type: application/json" "http://nephio:secret@172.18.255.200:3000/api/v1/user/repos" --data '{"name":"edge1"}'
+```
+
+Check the repos:
+```
+ curl -k -H "content-type: application/json" "http://nephio:secret@172.18.255.200:3000/api/v1/user/repos" | grep -Po '"name": *\K"[^"]*"'
+```
+
+Now initialize both repos with an initial commit.
 
 Initialize the `management` repo
 
 ```
+cd ../repos
 git clone http://172.18.255.200:3000/nephio/management
 cd management
 
@@ -193,64 +201,33 @@ git remote remove origin
 git remote add origin http://nephio:secret@172.18.255.200:3000/nephio/edge1.git
 git remote -v
 git push -u origin main
-cd ..
+cd ../../
 ```
 
 ## Install Porch
 
-We will use the Porch Kpt package from Nephio and update the kpt package to use the images generated for Porch in Nephio.
+We will use the Porch Kpt package from Nephio catalog repo.
 ```
 cd kpt_packages
 
-kpt pkg get https://github.com/nephio-project/nephio-example-packages/tree/main/porch-dev
-
-cd porch-dev
-```
-
-Edit the `2-function-runner.yaml` file:
-```
-42c42
-<           image: gcr.io/kpt-dev/porch-function-runner:v0.0.27
----
->           image: docker.io/nephio/porch-function-runner:latest
-51c51
-<               value: gcr.io/kpt-dev/porch-wrapper-server:v0.0.27
----
->               value: docker.io/nephio/porch-wrapper-server:latest
-```
-
-Edit the `3-porch-server.yaml` file:
-```
-50c50
-<           image: gcr.io/kpt-dev/porch-server:v0.0.27
----
->           image: docker.io/nephio/porch-server:latest
-```
-
-Edit the `9-controllers.yaml` file:
-```
-45c45
-<         image: gcr.io/kpt-dev/porch-controllers:v0.0.27
----
->         image: docker.io/nephio/porch-controllers:latest
+kpt pkg get https://github.com/nephio-project/catalog/tree/main/nephio/core/porch
 ```
 
 Now we can install porch. We render the kpt package and then init and apply it.
 
 ```
-cd ..
-kpt fn render porch-dev
-kpt live init porch-dev # You only need to do this command once
-kpt live apply porch-dev
+kpt fn render porch
+kpt live init porch # You only need to do this command once
+kpt live apply porch
 ```
 Check that the Porch PODs are running on the management cluster:
 ```
 kubectl get pod -n porch-system
 NAME                                 READY   STATUS    RESTARTS   AGE
-function-runner-7994f65554-bf2qz     1/1     Running   0          3d21h
-function-runner-7994f65554-ml6qb     1/1     Running   0          3d21h
-porch-controllers-7fb4497b77-285w5   1/1     Running   0          3d21h
-porch-server-68bfdddbbf-fz9br        1/1     Running   0          3d21h
+function-runner-7994f65554-nrzdh     1/1     Running   0          81s
+function-runner-7994f65554-txh9l     1/1     Running   0          81s
+porch-controllers-7fb4497b77-2r2r6   1/1     Running   0          81s
+porch-server-68bfdddbbf-pfqsm        1/1     Running   0          81s
 ```
 Check that the Porch CRDs and other resources have been created:
 ```
