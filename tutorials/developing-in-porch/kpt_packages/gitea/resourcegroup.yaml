@@ -1,0 +1,7 @@
+apiVersion: kpt.dev/v1alpha1
+kind: ResourceGroup
+metadata:
+  name: inventory-30263033
+  namespace: gitea
+  labels:
+    cli-utils.sigs.k8s.io/inventory-id: 523adf29ff6c66b0ab7f6f9af24d9e7fa309209e-1705580552421779000

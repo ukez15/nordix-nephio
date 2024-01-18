@@ -1570,6 +1570,7 @@ network-function-c             network-function-9779fc9f5-h7nsb                 
 
 <details>
 <summary>It is also intereting to examine the yaml of the PackageVariant:</summary>
+
 ```
 kubectl get PackageVariant -n porch-demo -o yaml
 apiVersion: v1
