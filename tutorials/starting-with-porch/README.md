@@ -47,7 +47,7 @@ cd nordix-nephio/tutorials/starting-with-porch/
 Create the clusters:
 
 ```
-kind create cluster --config=kind_managemnt_cluster.yaml
+kind create cluster --config=kind_management_cluster.yaml
 kind create cluster --config=kind_edge1_cluster.yaml
 ```
 
