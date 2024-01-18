@@ -1409,7 +1409,7 @@ NAME                                                  PACKAGE            WORKSPA
 management-8b80738a6e0707e3718ae1db3668d0b8ca3f1c82   network-function   v1                         false    Draft       management
 ```
 
-This command creates a new PackageRevision CR in porch and also creates a branch called `network-function/v1` in our gitea `management` repo. Use the Gitea web UI to confirm that the pranch ahs been created and note that it only has default content as yet.
+This command creates a new PackageRevision CR in porch and also creates a branch called `network-function/v1` in our gitea `management` repo. Use the Gitea web UI to confirm that the branch has been created and note that it only has default content as yet.
 
 > This step is a workaround for a possible bug. The `porchctl rpkg push` command expects a `.KptRevisionMetadata` file to exist in the directory from which we are pushing the package contents. The following command reads the `KptRevisionMetadata` from the PackageRevision we have just created and stores it in that file:
 
